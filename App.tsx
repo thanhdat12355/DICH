@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ArrowRightLeft, Loader2, Copy, Check, ArrowRight, BookOpen, Search } from 'lucide-react';
+import { ArrowRightLeft, Loader2, Copy, Check, ArrowRight, BookOpen, Search, Volume2 } from 'lucide-react';
 import { translateAndSearch } from './services/api';
 import { LoadingState, TranslationDirection, RelatedTerm } from './types';
 import { Header } from './components/Header';
@@ -77,6 +77,17 @@ const App: React.FC = () => {
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const handleSpeak = (text: string, langCode: 'de-DE' | 'vi-VN') => {
+    if (!text) return;
+    // Cancel any current speaking
+    window.speechSynthesis.cancel();
+
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = langCode;
+    utterance.rate = 0.9; // Slightly slower for better clarity
+    window.speechSynthesis.speak(utterance);
+  };
+
   const isViToDe = direction === 'vi-de';
 
   return (
@@ -123,9 +134,21 @@ const App: React.FC = () => {
                   autoFocus
                 />
                 <div className="mt-4 flex justify-between items-center text-gray-400">
-                   {inputText && (
-                     <button onClick={() => setInputText('')} className="text-xs hover:text-gray-600">Xóa</button>
-                   )}
+                   <div className="flex items-center gap-2">
+                     {inputText && (
+                       <button onClick={() => setInputText('')} className="text-xs hover:text-gray-600 font-medium">Xóa</button>
+                     )}
+                     {/* Input Speaker - Show if input is German OR just to be helpful */}
+                     {inputText && (
+                       <button 
+                        onClick={() => handleSpeak(inputText, isViToDe ? 'vi-VN' : 'de-DE')}
+                        className="p-1.5 hover:bg-gray-100 rounded-full text-gray-400 hover:text-blue-600 transition-colors"
+                        title="Nghe phát âm"
+                       >
+                         <Volume2 className="w-4 h-4" />
+                       </button>
+                     )}
+                   </div>
                    <span className="text-xs ml-auto">{inputText.length}/1000</span>
                 </div>
               </div>
@@ -136,15 +159,24 @@ const App: React.FC = () => {
                   <span className="text-xs font-bold text-blue-600 uppercase tracking-wider">
                     {isViToDe ? 'German (Result)' : 'Vietnamese (Result)'}
                   </span>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1">
                     {status === LoadingState.SUCCESS && (
-                       <button 
-                         onClick={copyToClipboard}
-                         className="p-1.5 hover:bg-gray-200 rounded-md transition-colors text-gray-500"
-                         title="Copy translation"
-                       >
-                         {copied ? <Check className="w-4 h-4 text-green-600" /> : <Copy className="w-4 h-4" />}
-                       </button>
+                       <>
+                         <button 
+                           onClick={() => handleSpeak(translatedText, isViToDe ? 'de-DE' : 'vi-VN')}
+                           className="p-1.5 hover:bg-gray-200 rounded-md transition-colors text-gray-500 hover:text-blue-600"
+                           title="Nghe phát âm"
+                         >
+                           <Volume2 className="w-4 h-4" />
+                         </button>
+                         <button 
+                           onClick={copyToClipboard}
+                           className="p-1.5 hover:bg-gray-200 rounded-md transition-colors text-gray-500"
+                           title="Sao chép bản dịch"
+                         >
+                           {copied ? <Check className="w-4 h-4 text-green-600" /> : <Copy className="w-4 h-4" />}
+                         </button>
+                       </>
                     )}
                   </div>
                 </div>
@@ -218,22 +250,37 @@ const App: React.FC = () => {
               <div className="w-full mt-2 pl-0 sm:pl-[3.25rem]">
                 <div className="pt-4 border-t border-dashed border-indigo-100">
                   <span className="text-xs font-semibold text-indigo-400 uppercase tracking-wide block mb-3">
-                    Tham khảo hình ảnh các từ liên quan
+                    Tham khảo hình ảnh & Phát âm (Đức)
                   </span>
                   <div className="flex flex-wrap gap-3">
                     {relatedTerms.map((item, index) => (
-                      <button
+                      <div
                         key={index}
-                        onClick={() => openGoogleImages(item.term)}
-                        className="group flex items-center gap-2 px-3 py-1.5 bg-indigo-50/50 hover:bg-indigo-100 border border-indigo-100 hover:border-indigo-300 rounded-lg transition-all text-sm text-gray-700"
-                        title={`Xem hình ảnh cho '${item.term}'`}
+                        className="group flex items-center bg-indigo-50/50 hover:bg-indigo-100 border border-indigo-100 hover:border-indigo-300 rounded-lg transition-all text-sm text-gray-700 overflow-hidden pl-1"
                       >
-                        <Search className="w-3.5 h-3.5 text-indigo-500 group-hover:text-indigo-700" />
-                        <span className="font-medium text-indigo-900">{item.term}</span>
-                        <span className="text-gray-400 group-hover:text-indigo-400 text-xs border-l border-indigo-200 pl-2 ml-1">
-                          {item.meaning}
-                        </span>
-                      </button>
+                         <button
+                           onClick={(e) => {
+                             e.stopPropagation();
+                             handleSpeak(item.term, 'de-DE');
+                           }}
+                           className="p-1.5 hover:bg-white/60 rounded-md text-indigo-400 hover:text-indigo-700 transition-colors"
+                           title="Nghe phát âm"
+                         >
+                           <Volume2 className="w-3.5 h-3.5" />
+                         </button>
+                         <div className="w-px h-4 bg-indigo-200 mx-1"></div>
+                         <button 
+                           onClick={() => openGoogleImages(item.term)}
+                           className="flex items-center gap-2 py-1.5 pr-3 pl-1"
+                           title={`Xem hình ảnh cho '${item.term}'`}
+                         >
+                           <Search className="w-3.5 h-3.5 text-indigo-500 group-hover:text-indigo-700" />
+                           <span className="font-medium text-indigo-900">{item.term}</span>
+                           <span className="text-gray-400 group-hover:text-indigo-400 text-xs border-l border-indigo-200 pl-2 ml-1">
+                            {item.meaning}
+                           </span>
+                        </button>
+                      </div>
                     ))}
                   </div>
                 </div>
