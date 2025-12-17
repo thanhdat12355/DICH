@@ -51,7 +51,8 @@ const fetchTranslation = async (text: string, direction: TranslationDirection): 
         - Keep it concise, helpful, and culturally relevant for a Vietnamese learner.
         
         Task 3: Extract "relatedTerms".
-        - List the specific German keywords mentioned in your explanation (synonyms, related objects, regional variations) that the user might want to see images of.
+        - **STRICT REQUIREMENT**: You MUST extract **EVERY SINGLE** German noun, phrase, or keyword mentioned in your "explanation" above into this list.
+        - **COUNT CHECK**: If you discuss 5 German terms in the explanation, there MUST be exactly 5 items in this list. Do not omit any terms.
         - For each term, provide the German word (key 'term') and a very short meaning in **Vietnamese** (key 'meaning').
         
         Input Text: "${text}"
@@ -73,7 +74,7 @@ const fetchTranslation = async (text: string, direction: TranslationDirection): 
               },
               relatedTerms: {
                 type: Type.ARRAY,
-                description: "List of relevant German terms mentioned in the explanation for image search.",
+                description: "EXHAUSTIVE list of ALL German terms mentioned in the explanation.",
                 items: {
                   type: Type.OBJECT,
                   properties: {
