@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { ArrowRightLeft, Loader2, ExternalLink, Copy, Check, ImageIcon, ArrowRight, BookOpen, Info, Search } from 'lucide-react';
+import React, { useState } from 'react';
+import { ArrowRightLeft, Loader2, Copy, Check, ArrowRight, BookOpen, Search } from 'lucide-react';
 import { translateAndSearch } from './services/api';
 import { LoadingState, TranslationDirection, RelatedTerm } from './types';
 import { Header } from './components/Header';
@@ -14,33 +14,6 @@ const App: React.FC = () => {
   const [status, setStatus] = useState<LoadingState>(LoadingState.IDLE);
   const [errorMsg, setErrorMsg] = useState('');
   const [copied, setCopied] = useState(false);
-  const [progress, setProgress] = useState(0);
-  const progressIntervalRef = useRef<number | null>(null);
-
-  const startProgressSimulation = () => {
-    setProgress(0);
-    if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
-
-    progressIntervalRef.current = window.setInterval(() => {
-      setProgress((prev) => {
-        // Fast at first, then slows down significantly as it approaches 90%
-        // to simulate "thinking" without reaching 100% prematurely.
-        if (prev < 30) return prev + 2; 
-        if (prev < 60) return prev + 1;
-        if (prev < 85) return prev + 0.5;
-        if (prev < 95) return prev + 0.1; 
-        return prev;
-      });
-    }, 100);
-  };
-
-  const stopProgressSimulation = () => {
-    if (progressIntervalRef.current) {
-      clearInterval(progressIntervalRef.current);
-      progressIntervalRef.current = null;
-    }
-    setProgress(100);
-  };
 
   const handleTranslate = async () => {
     if (!inputText.trim()) return;
@@ -50,23 +23,17 @@ const App: React.FC = () => {
     setExplanation('');
     setRelatedTerms([]);
     setErrorMsg('');
-    startProgressSimulation();
 
     try {
       const result = await translateAndSearch(inputText, direction);
-      stopProgressSimulation();
       
-      // Small delay to let the user see 100% before showing result
-      setTimeout(() => {
-        setTranslatedText(result.translatedText);
-        setExplanation(result.explanation || '');
-        setRelatedTerms(result.relatedTerms || []);
-        setStatus(LoadingState.SUCCESS);
-      }, 300);
+      setTranslatedText(result.translatedText);
+      setExplanation(result.explanation || '');
+      setRelatedTerms(result.relatedTerms || []);
+      setStatus(LoadingState.SUCCESS);
       
     } catch (err) {
       console.error(err);
-      stopProgressSimulation();
       setStatus(LoadingState.ERROR);
       setErrorMsg('Dịch vụ đang bận hoặc mất kết nối. Vui lòng thử lại.');
     }
@@ -88,7 +55,6 @@ const App: React.FC = () => {
     }
     
     setStatus(LoadingState.IDLE);
-    setProgress(0);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -110,13 +76,6 @@ const App: React.FC = () => {
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
-
-  // Cleanup interval on unmount
-  useEffect(() => {
-    return () => {
-      if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
-    };
-  }, []);
 
   const isViToDe = direction === 'vi-de';
 
@@ -193,34 +152,7 @@ const App: React.FC = () => {
                 <div className="flex-grow relative flex flex-col justify-center">
                   {status === LoadingState.LOADING ? (
                     <div className="flex flex-col items-center justify-center gap-4 animate-fade-in">
-                      {/* Custom Circular Progress */}
-                      <div className="relative w-16 h-16 flex items-center justify-center">
-                        <svg className="w-full h-full transform -rotate-90">
-                          <circle
-                            cx="32"
-                            cy="32"
-                            r="28"
-                            stroke="currentColor"
-                            strokeWidth="4"
-                            fill="none"
-                            className="text-gray-200"
-                          />
-                          <circle
-                            cx="32"
-                            cy="32"
-                            r="28"
-                            stroke="currentColor"
-                            strokeWidth="4"
-                            fill="none"
-                            strokeDasharray={175} // 2 * pi * 28
-                            strokeDashoffset={175 - (175 * progress) / 100}
-                            className="text-blue-600 transition-all duration-300 ease-out"
-                          />
-                        </svg>
-                        <div className="absolute inset-0 flex items-center justify-center">
-                           <span className="text-xs font-bold text-blue-600">{Math.round(progress)}%</span>
-                        </div>
-                      </div>
+                      <Loader2 className="w-10 h-10 text-blue-600 animate-spin" />
                       <div className="text-sm font-medium text-blue-600 animate-pulse">
                         AI đang suy nghĩ...
                       </div>
@@ -236,19 +168,6 @@ const App: React.FC = () => {
 
                 {/* Bottom Actions */}
                 <div className="mt-6 pt-4 border-t border-gray-100 flex flex-col gap-3">
-                   {/* Main Image Search Button */}
-                   {((isViToDe && translatedText) || (!isViToDe && inputText)) && status !== LoadingState.LOADING && (
-                      <button
-                        onClick={() => openGoogleImages(isViToDe ? translatedText : inputText)}
-                        className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-white text-gray-700 hover:bg-gray-50 hover:text-blue-600 hover:border-blue-200 rounded-lg font-medium transition-all text-sm border border-gray-200 shadow-sm"
-                        title="Search German context on Google Images"
-                      >
-                        <ImageIcon className="w-4 h-4" />
-                        <span>Xem '{isViToDe ? translatedText : inputText}' trên Google Images</span>
-                        <ExternalLink className="w-3 h-3 opacity-40" />
-                      </button>
-                   )}
-
                    {/* Translate Button */}
                    <button
                     onClick={handleTranslate}
