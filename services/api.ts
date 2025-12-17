@@ -53,6 +53,7 @@ const fetchTranslation = async (text: string, direction: TranslationDirection): 
         Task 3: Extract "relatedTerms".
         - **STRICT REQUIREMENT**: You MUST extract **EVERY SINGLE** German noun, phrase, or keyword mentioned in your "explanation" above into this list.
         - **COUNT CHECK**: If you discuss 5 German terms in the explanation, there MUST be exactly 5 items in this list. Do not omit any terms.
+        - **NOUNS MUST HAVE ARTICLES**: For every German noun in this list, you MUST include its definite article (der, die, das). E.g., write "das Haus" not "Haus", "die Kinder" not "Kinder".
         - For each term, provide the German word (key 'term') and a very short meaning in **Vietnamese** (key 'meaning').
         
         Input Text: "${text}"
@@ -78,7 +79,7 @@ const fetchTranslation = async (text: string, direction: TranslationDirection): 
                 items: {
                   type: Type.OBJECT,
                   properties: {
-                    term: { type: Type.STRING, description: "The German word" },
+                    term: { type: Type.STRING, description: "The German word (MUST include 'der', 'die', or 'das' if it is a noun)" },
                     meaning: { type: Type.STRING, description: "Short meaning/context in Vietnamese" }
                   }
                 }
