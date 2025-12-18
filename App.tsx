@@ -201,14 +201,21 @@ const App: React.FC = () => {
                     </span>
                     <div>
                       <div className="flex items-center gap-2">
-                        <h4 className="font-google-sans font-bold text-slate-900 text-xl group-hover:text-blue-600 tracking-tight leading-none">
-                          {item.term}
-                        </h4>
-                        <button onClick={() => handleSpeak(item.term, 'de-DE')} className="text-slate-300 hover:text-blue-500 transition-colors p-1">
-                          <Volume2 className="w-4 h-4" />
-                        </button>
+                        <div className="flex flex-col">
+                          <div className="flex items-center gap-2">
+                            <h4 className="font-google-sans font-bold text-slate-900 text-xl group-hover:text-blue-600 tracking-tight leading-none">
+                              {item.term}
+                            </h4>
+                            <button onClick={() => handleSpeak(item.term, 'de-DE')} className="text-slate-300 hover:text-blue-500 transition-colors p-1">
+                              <Volume2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                          <span className="text-[10px] font-bold text-blue-500/60 uppercase tracking-widest mt-1">
+                            {item.partOfSpeech}
+                          </span>
+                        </div>
                       </div>
-                      <p className="text-sm text-slate-500 font-medium mt-1">{item.meaning}</p>
+                      <p className="text-base text-slate-600 font-semibold mt-2">{item.meaning}</p>
                     </div>
                   </div>
                   <a 

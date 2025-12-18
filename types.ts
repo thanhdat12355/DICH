@@ -1,3 +1,4 @@
+
 export interface GroundingWeb {
   uri: string;
   title: string;
@@ -8,8 +9,9 @@ export interface GroundingChunk {
 }
 
 export interface RelatedTerm {
-  term: string;     // The German word (e.g., "Krabben")
-  meaning: string;  // Brief meaning (e.g., "North Sea shrimp")
+  term: string;          // The German word (e.g., "Krabben")
+  meaning: string;       // Brief meaning (e.g., "North Sea shrimp")
+  partOfSpeech: string;  // Part of speech (e.g., "Danh từ", "Động từ")
 }
 
 export interface TranslationResult {

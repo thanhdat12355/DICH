@@ -22,6 +22,7 @@ export const translateAndSearch = async (text: string, direction: TranslationDir
       TASK 3: Provide EXACTLY 10 related German words/phrases.
       - RULE: All German nouns MUST include their article (der/die/das). 
       - Provide the Vietnamese meaning for each.
+      - For each word, specify its part of speech (e.g., Danh từ, Động từ, Tính từ, Trạng từ) in Vietnamese.
       - Format as a list of 10 items.
     `;
 
@@ -44,9 +45,10 @@ export const translateAndSearch = async (text: string, direction: TranslationDir
                 type: Type.OBJECT,
                 properties: {
                   term: { type: Type.STRING, description: "German word WITH article" },
-                  meaning: { type: Type.STRING, description: "Vietnamese meaning" }
+                  meaning: { type: Type.STRING, description: "Vietnamese meaning" },
+                  partOfSpeech: { type: Type.STRING, description: "Part of speech in Vietnamese (e.g., Danh từ)" }
                 },
-                required: ["term", "meaning"]
+                required: ["term", "meaning", "partOfSpeech"]
               }
             }
           },
