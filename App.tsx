@@ -6,11 +6,11 @@ import {
   Copy, 
   Check, 
   ArrowRight, 
-  Search, 
   Volume2, 
   Globe, 
   Image as ImageIcon,
-  BookOpen
+  BookOpen,
+  ExternalLink
 } from 'lucide-react';
 import { translateAndSearch } from './services/api';
 import { LoadingState, TranslationDirection, RelatedTerm } from './types';
@@ -19,6 +19,7 @@ import { Header } from './components/Header';
 const App: React.FC = () => {
   const [inputText, setInputText] = useState('');
   const [translatedText, setTranslatedText] = useState('');
+  const [mainPartOfSpeech, setMainPartOfSpeech] = useState('');
   const [explanation, setExplanation] = useState(''); 
   const [relatedTerms, setRelatedTerms] = useState<RelatedTerm[]>([]);
   const [direction, setDirection] = useState<TranslationDirection>('vi-de');
@@ -33,6 +34,7 @@ const App: React.FC = () => {
     try {
       const result = await translateAndSearch(inputText, direction);
       setTranslatedText(result.translatedText);
+      setMainPartOfSpeech(result.mainPartOfSpeech || '');
       setExplanation(result.explanation || '');
       setRelatedTerms(result.relatedTerms || []);
       setStatus(LoadingState.SUCCESS);
@@ -66,6 +68,7 @@ const App: React.FC = () => {
     setDirection(prev => prev === 'vi-de' ? 'de-vi' : 'vi-de');
     setInputText(translatedText);
     setTranslatedText(inputText);
+    setMainPartOfSpeech('');
   };
 
   const handleSpeak = (text: string, lang: 'de-DE' | 'vi-VN') => {
@@ -82,160 +85,209 @@ const App: React.FC = () => {
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const getPosColor = (pos: string) => {
+    const p = pos.toLowerCase();
+    if (p.includes('danh từ')) return 'bg-blue-100 text-blue-700 border-blue-200';
+    if (p.includes('động từ')) return 'bg-rose-100 text-rose-700 border-rose-200';
+    if (p.includes('tính từ')) return 'bg-amber-100 text-amber-700 border-amber-200';
+    if (p.includes('trạng từ')) return 'bg-emerald-100 text-emerald-700 border-emerald-200';
+    return 'bg-slate-100 text-slate-700 border-slate-200';
+  };
+
   return (
-    <div className="min-h-screen bg-[#f8fafc] flex flex-col font-sans">
+    <div className="min-h-screen bg-[#f8fafc] flex flex-col font-sans text-slate-900">
       <Header />
 
-      <main className="flex-grow max-w-4xl w-full mx-auto px-4 py-8 space-y-6">
-        {/* Translator Grid */}
-        <div className="bg-white rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-100 overflow-hidden">
+      <main className="flex-grow max-w-4xl w-full mx-auto px-4 py-8 space-y-8">
+        {/* Translator Card */}
+        <div className="bg-white rounded-[2.5rem] shadow-2xl shadow-slate-200/60 border border-slate-100 overflow-hidden transition-all">
           <div className="flex flex-col sm:flex-row divide-y sm:divide-y-0 sm:divide-x divide-slate-100">
             <div className="flex-1 p-8">
               <div className="flex items-center justify-between mb-6">
-                <span className="px-3 py-1 bg-slate-100 rounded-full text-[10px] font-black text-slate-500 uppercase tracking-tighter">
+                <span className="px-4 py-1.5 bg-slate-100 rounded-full text-[11px] font-black text-slate-500 uppercase tracking-widest">
                   {direction === 'vi-de' ? 'Tiếng Việt' : 'Tiếng Đức'}
                 </span>
                 <span className="text-[10px] text-slate-400 font-bold uppercase tracking-tight">
-                  Enter để dịch • Tab để xuống dòng
+                  Enter to Translate
                 </span>
               </div>
               <textarea
                 ref={textareaRef}
-                className="w-full h-48 resize-none border-none focus:ring-0 text-2xl text-slate-800 placeholder-slate-200 outline-none font-medium"
-                placeholder="Gõ nội dung cần dịch..."
+                className="w-full h-48 resize-none border-none focus:ring-0 text-2xl text-slate-800 placeholder-slate-200 outline-none font-medium leading-relaxed"
+                placeholder="Nhập nội dung cần dịch..."
                 value={inputText}
                 onChange={(e) => setInputText(e.target.value)}
                 onKeyDown={handleKeyDown}
               />
             </div>
 
-            <div className="flex-1 p-8 bg-slate-50/50">
+            <div className="flex-1 p-8 bg-slate-50/40">
               <div className="flex items-center justify-between mb-6">
-                <span className="px-3 py-1 bg-blue-100 rounded-full text-[10px] font-black text-blue-600 uppercase tracking-tighter">
-                  {direction === 'vi-de' ? 'Tiếng Đức' : 'Tiếng Việt'}
-                </span>
-                <div className="flex gap-2">
+                <div className="flex items-center gap-2">
+                  <span className="px-4 py-1.5 bg-blue-100 rounded-full text-[11px] font-black text-blue-600 uppercase tracking-widest">
+                    {direction === 'vi-de' ? 'Tiếng Đức' : 'Tiếng Việt'}
+                  </span>
+                  {mainPartOfSpeech && status !== LoadingState.LOADING && (
+                    <span className={`px-2.5 py-1 rounded-lg text-[9px] font-black border uppercase tracking-widest shadow-sm ${getPosColor(mainPartOfSpeech)}`}>
+                      {mainPartOfSpeech}
+                    </span>
+                  )}
+                </div>
+                <div className="flex gap-1.5">
                   {translatedText && (
                     <>
-                      <button onClick={() => handleSpeak(translatedText, direction === 'vi-de' ? 'de-DE' : 'vi-VN')} className="p-2 hover:bg-white rounded-full text-slate-400 hover:text-blue-500 transition-colors">
-                        <Volume2 className="w-4 h-4" />
+                      <button onClick={() => handleSpeak(translatedText, direction === 'vi-de' ? 'de-DE' : 'vi-VN')} className="p-2.5 hover:bg-white rounded-xl text-slate-400 hover:text-blue-500 transition-all shadow-sm hover:shadow">
+                        <Volume2 className="w-4.5 h-4.5" />
                       </button>
-                      <button onClick={copyToClipboard} className="p-2 hover:bg-white rounded-full text-slate-400 hover:text-blue-500 transition-colors">
-                        {copied ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
+                      <button onClick={copyToClipboard} className="p-2.5 hover:bg-white rounded-xl text-slate-400 hover:text-blue-500 transition-all shadow-sm hover:shadow">
+                        {copied ? <Check className="w-4.5 h-4.5 text-green-500" /> : <Copy className="w-4.5 h-4.5" />}
                       </button>
                     </>
                   )}
                 </div>
               </div>
-              <div className="h-48 overflow-y-auto">
+              <div className="h-48 overflow-y-auto custom-scrollbar">
                 {status === LoadingState.LOADING ? (
-                  <div className="h-full flex flex-col items-center justify-center gap-3">
-                    <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
-                    <span className="text-xs font-bold text-slate-400 animate-pulse uppercase tracking-widest">Đang xử lý</span>
+                  <div className="h-full flex flex-col items-center justify-center gap-4">
+                    <div className="relative">
+                      <Loader2 className="w-10 h-10 animate-spin text-blue-500" />
+                      <div className="absolute inset-0 blur-xl bg-blue-400/20 rounded-full animate-pulse"></div>
+                    </div>
+                    <span className="text-[11px] font-black text-slate-400 animate-pulse uppercase tracking-widest">Đang phân tích ngữ cảnh...</span>
                   </div>
                 ) : (
-                  <p className="text-2xl font-bold text-slate-900 leading-tight whitespace-pre-wrap">
-                    {translatedText || <span className="text-slate-200 font-normal italic">Kết quả sẽ hiện ở đây...</span>}
-                  </p>
+                  <div className="space-y-2">
+                    <p className="text-2xl font-bold text-slate-900 leading-snug whitespace-pre-wrap">
+                      {translatedText || <span className="text-slate-200 font-normal italic">Kết quả dịch thuật...</span>}
+                    </p>
+                  </div>
                 )}
               </div>
             </div>
           </div>
           
-          <div className="p-6 bg-slate-50 border-t border-slate-100 flex items-center justify-between">
-            <button onClick={handleSwap} className="flex items-center gap-2 text-sm font-bold text-slate-400 hover:text-blue-600 transition-colors">
-              <ArrowRightLeft className="w-4 h-4" /> Đảo ngôn ngữ
+          <div className="p-6 bg-slate-50/80 border-t border-slate-100 flex items-center justify-between">
+            <button onClick={handleSwap} className="group flex items-center gap-2.5 text-xs font-black text-slate-400 hover:text-blue-600 transition-all uppercase tracking-tighter">
+              <div className="p-2 bg-white rounded-lg shadow-sm border border-slate-200 group-hover:border-blue-200 transition-colors">
+                <ArrowRightLeft className="w-4 h-4" />
+              </div>
+              Đảo ngôn ngữ
             </button>
             <button
               onClick={handleTranslate}
               disabled={!inputText.trim() || status === LoadingState.LOADING}
-              className="px-10 py-4 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-300 text-white rounded-2xl font-black transition-all shadow-xl shadow-blue-200 flex items-center gap-3 transform active:scale-95"
+              className="px-12 py-4.5 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-300 text-white rounded-2xl font-black transition-all shadow-xl shadow-blue-200 flex items-center gap-3 transform active:scale-95 hover:-translate-y-0.5"
             >
-              {status === LoadingState.LOADING ? 'ĐANG DỊCH...' : 'DỊCH NGAY'}
+              {status === LoadingState.LOADING ? 'ĐANG XỬ LÝ' : 'DỊCH NGAY'}
               <ArrowRight className="w-5 h-5" />
             </button>
           </div>
         </div>
 
         {explanation && (
-          <div className="bg-white p-8 rounded-3xl border border-slate-100 shadow-sm animate-fade-in">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="p-2 bg-indigo-100 rounded-xl text-indigo-600">
-                <Globe className="w-5 h-5" />
+          <div className="bg-white p-8 rounded-[2rem] border border-slate-100 shadow-xl shadow-slate-200/40 animate-fade-in">
+            <div className="flex items-center gap-4 mb-6">
+              <div className="p-3 bg-indigo-50 rounded-2xl text-indigo-600 shadow-sm border border-indigo-100">
+                <Globe className="w-6 h-6" />
               </div>
-              <h3 className="font-black text-slate-800 uppercase tracking-tight">Ghi chú Ngôn ngữ & Văn hóa</h3>
+              <div>
+                <h3 className="font-black text-slate-900 text-lg uppercase tracking-tight">Ghi chú Ngôn ngữ & Văn hóa</h3>
+                <div className="h-1 w-12 bg-indigo-500 rounded-full mt-1"></div>
+              </div>
             </div>
-            <p className="text-slate-600 leading-relaxed whitespace-pre-wrap">{explanation}</p>
+            <p className="text-slate-600 leading-loose text-lg whitespace-pre-wrap font-medium">{explanation}</p>
           </div>
         )}
 
-        {/* Visual Vocabulary */}
-        <div className={`bg-white p-8 rounded-3xl border border-slate-100 shadow-xl shadow-slate-200/50 animate-fade-in ${relatedTerms.length === 0 && status !== LoadingState.LOADING ? 'hidden' : 'block'}`}>
-          <div className="flex items-center justify-between mb-8">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-green-100 rounded-xl text-green-600">
-                <BookOpen className="w-5 h-5" />
+        {/* Visual Vocabulary Grid */}
+        <div className={`${relatedTerms.length === 0 && status !== LoadingState.LOADING ? 'hidden' : 'block'} animate-fade-in`}>
+          <div className="flex items-end justify-between mb-8 px-2">
+            <div className="flex items-center gap-4">
+              <div className="p-3 bg-emerald-50 rounded-2xl text-emerald-600 shadow-sm border border-emerald-100">
+                <BookOpen className="w-6 h-6" />
               </div>
-              <h3 className="font-black text-slate-800 text-xl uppercase tracking-tight">Từ vựng trực quan (10 từ)</h3>
+              <div>
+                <h3 className="font-black text-slate-900 text-2xl uppercase tracking-tight">Từ vựng trực quan</h3>
+                <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mt-0.5">10 từ vựng quan trọng kèm hình ảnh</p>
+              </div>
             </div>
-            {relatedTerms.length > 0 && (
-              <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest hidden sm:block">
-                Nhấn vào icon ảnh để xem 10+ kết quả thực tế
-              </span>
-            )}
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {status === LoadingState.LOADING && (
-               <div className="col-span-full py-12 flex flex-col items-center justify-center opacity-40">
-                <Loader2 className="w-8 h-8 animate-spin text-slate-400" />
-              </div>
-            )}
-
-            {relatedTerms.map((item, idx) => (
-              <div key={idx} className="group relative bg-slate-50 rounded-2xl p-5 border border-transparent hover:border-blue-200 hover:bg-white transition-all duration-300">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <span className="w-8 h-8 flex-shrink-0 flex items-center justify-center rounded-full bg-slate-200 text-[12px] font-black text-slate-500 group-hover:bg-blue-500 group-hover:text-white transition-colors">
-                      {idx + 1}
-                    </span>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <div className="flex flex-col">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {status === LoadingState.LOADING ? (
+               Array.from({length: 4}).map((_, i) => (
+                <div key={i} className="h-32 bg-slate-100 rounded-3xl animate-pulse opacity-50"></div>
+               ))
+            ) : (
+              relatedTerms.map((item, idx) => (
+                <div key={idx} className="group relative bg-white rounded-[2rem] p-6 border border-slate-100 shadow-lg shadow-slate-200/40 hover:shadow-xl hover:shadow-blue-100 transition-all duration-500 hover:-translate-y-1 overflow-hidden">
+                  <div className="absolute top-0 right-0 -mr-8 -mt-8 w-24 h-24 bg-slate-50 rounded-full group-hover:bg-blue-50 transition-colors duration-500 -z-10"></div>
+                  
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-start gap-5">
+                      <div className="mt-1">
+                        <span className="flex items-center justify-center w-10 h-10 rounded-2xl bg-slate-100 text-[13px] font-black text-slate-500 group-hover:bg-blue-600 group-hover:text-white transition-all duration-300 shadow-sm">
+                          {(idx + 1).toString().padStart(2, '0')}
+                        </span>
+                      </div>
+                      
+                      <div className="space-y-3">
+                        <div className="space-y-1">
                           <div className="flex items-center gap-2">
-                            <h4 className="font-google-sans font-bold text-slate-900 text-xl group-hover:text-blue-600 tracking-tight leading-none">
+                            <h4 className="font-google-sans font-extrabold text-slate-900 text-2xl tracking-tight leading-none group-hover:text-blue-600 transition-colors">
                               {item.term}
                             </h4>
-                            <button onClick={() => handleSpeak(item.term, 'de-DE')} className="text-slate-300 hover:text-blue-500 transition-colors p-1">
-                              <Volume2 className="w-4 h-4" />
+                            <button 
+                              onClick={() => handleSpeak(item.term, 'de-DE')} 
+                              className="p-1.5 text-slate-300 hover:text-blue-500 transition-all hover:bg-blue-50 rounded-lg"
+                              title="Nghe phát âm"
+                            >
+                              <Volume2 className="w-5 h-5" />
                             </button>
                           </div>
-                          <span className="text-[10px] font-bold text-blue-500/60 uppercase tracking-widest mt-1">
+                          <span className={`inline-block px-3 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest border ${getPosColor(item.partOfSpeech)}`}>
                             {item.partOfSpeech}
                           </span>
                         </div>
+                        
+                        <div className="relative pl-4 border-l-2 border-slate-100 group-hover:border-blue-100 transition-colors">
+                          <p className="text-xl text-slate-700 font-bold leading-tight">
+                            {item.meaning}
+                          </p>
+                        </div>
                       </div>
-                      <p className="text-base text-slate-600 font-semibold mt-2">{item.meaning}</p>
                     </div>
+
+                    <a 
+                      href={`https://www.google.com/search?tbm=isch&q=${encodeURIComponent(item.term)}`} 
+                      target="_blank" 
+                      rel="noreferrer"
+                      className="group/btn flex flex-col items-center gap-1.5 p-4 bg-slate-50 hover:bg-blue-600 rounded-2xl transition-all shadow-sm hover:shadow-lg hover:shadow-blue-200 transform group-hover:scale-105"
+                      title="Xem hình ảnh thực tế trên Google"
+                    >
+                      <ImageIcon className="w-6 h-6 text-slate-400 group-hover/btn:text-white transition-colors" />
+                      <span className="text-[9px] font-black text-slate-400 group-hover/btn:text-white uppercase tracking-tighter">Images</span>
+                    </a>
                   </div>
-                  <a 
-                    href={`https://www.google.com/search?tbm=isch&q=${encodeURIComponent(item.term)}`} 
-                    target="_blank" 
-                    rel="noreferrer"
-                    className="p-3 bg-white rounded-xl text-slate-300 hover:text-blue-500 hover:shadow-lg transition-all transform hover:-translate-y-1"
-                    title="Xem 10+ hình ảnh thực tế"
-                  >
-                    <ImageIcon className="w-5 h-5" />
-                  </a>
                 </div>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </div>
       </main>
       
-      <footer className="py-8 text-center text-slate-400 text-xs font-medium">
-        © 2024 Viet-Ger Visual Translator • Học tiếng Đức qua ngữ cảnh
+      <footer className="py-12 mt-8 text-center border-t border-slate-100">
+        <div className="flex items-center justify-center gap-2 mb-3">
+          <div className="w-1.5 h-1.5 rounded-full bg-blue-500"></div>
+          <div className="w-1.5 h-1.5 rounded-full bg-red-500"></div>
+          <div className="w-1.5 h-1.5 rounded-full bg-yellow-500"></div>
+        </div>
+        <p className="text-slate-400 text-[11px] font-black uppercase tracking-[0.2em]">
+          Viet-Ger Visual Translator • 2024
+        </p>
+        <p className="text-slate-300 text-[10px] mt-2 font-medium">
+          Học tiếng Đức nhanh hơn thông qua liên tưởng hình ảnh
+        </p>
       </footer>
     </div>
   );

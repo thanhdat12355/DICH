@@ -16,6 +16,7 @@ export interface RelatedTerm {
 
 export interface TranslationResult {
   translatedText: string;
+  mainPartOfSpeech?: string; // Part of speech of the main translation
   explanation?: string; 
   relatedTerms?: RelatedTerm[]; // List of related terms found in explanation
   groundingChunks?: GroundingChunk[];

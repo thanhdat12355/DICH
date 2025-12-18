@@ -15,6 +15,7 @@ export const translateAndSearch = async (text: string, direction: TranslationDir
       You are a Vietnamese-German language and culture expert.
       
       TASK 1: Translate this text from ${sourceLang} to ${targetLang}: "${text}"
+      Also determine the Part of Speech (e.g., Danh từ, Động từ, Tính từ, Trạng từ) of this translation in Vietnamese.
       
       TASK 2: Provide a brief "Linguistic & Cultural Note" in Vietnamese. 
       This should cover grammar, interesting idioms, cultural context, or usage nuances related to the translated text.
@@ -36,6 +37,7 @@ export const translateAndSearch = async (text: string, direction: TranslationDir
           type: Type.OBJECT,
           properties: {
             translatedText: { type: Type.STRING },
+            mainPartOfSpeech: { type: Type.STRING, description: "Part of speech of the main translation in Vietnamese" },
             explanation: { type: Type.STRING, description: "Linguistic and cultural notes" },
             relatedTerms: {
               type: Type.ARRAY,
@@ -52,7 +54,7 @@ export const translateAndSearch = async (text: string, direction: TranslationDir
               }
             }
           },
-          required: ["translatedText", "relatedTerms", "explanation"],
+          required: ["translatedText", "mainPartOfSpeech", "relatedTerms", "explanation"],
         },
       }
     });
@@ -60,6 +62,7 @@ export const translateAndSearch = async (text: string, direction: TranslationDir
     const data = JSON.parse(response.text || "{}");
     return {
       translatedText: data.translatedText,
+      mainPartOfSpeech: data.mainPartOfSpeech,
       explanation: data.explanation,
       relatedTerms: data.relatedTerms
     };
